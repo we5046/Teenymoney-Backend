@@ -138,27 +138,10 @@ class QuestApprovalConcurrencyTest {
         System.out.println("[S2] winner=" + winners.get(0).type());
     }
 
-    @RepeatedTest(30)
-    @DisplayName("S3. 승인·용돈·충전이 같은 부모 지갑에 몰려도 잔액과 원장이 맞고 데드락이 없다")
-    void s3_parentWalletContention() throws Exception {
-        List<ConcurrentRunner.Task> tasks = parentWalletContentionTasks(fixture, review, allowance, charge);
-
-        List<ConcurrentRunner.Outcome> outcomes = ConcurrentRunner.runAtOnce(tasks, TIMEOUT);
-
-        // 데드락·잠금 대기 초과는 UNEXPECTED 예외로 드러난다. 15건 모두 성공해야 한다.
-        assertThat(outcomes).allMatch(ConcurrentRunner.Outcome::success);
-        long expectedParent = INITIAL_PARENT_BALANCE + 5 * 3_000L - 5 * 1_000L - 5 * 2_000L;
-        assertThat(fixture.balance(PARENT_WALLET_ID)).isEqualTo(expectedParent);
-        assertThat(fixture.balance(CHILD_WALLET_ID)).isEqualTo(5 * 1_000L + 5 * 2_000L);
-        assertThat(fixture.ledgerNet(PARENT_WALLET_ID)).isEqualTo(expectedParent - INITIAL_PARENT_BALANCE);
-        assertThat(fixture.ledgerNet(CHILD_WALLET_ID)).isEqualTo(fixture.balance(CHILD_WALLET_ID));
-        assertThat(fixture.minBalanceAfter(PARENT_WALLET_ID)).isGreaterThanOrEqualTo(0L);
-    }
-
     /**
-     * S3 요청 15건: 서로 다른 퀘스트 승인 5 + 수동 용돈 5 + 충전 입금 5.
+     * 지연 측정(ParentWalletContentionExperiment) 요청 15건: 서로 다른 퀘스트 승인 5 + 수동 용돈 5 + 충전 입금 5.
      * 퀘스트는 티니점수를 끈다. 부모 지갑 경합만 보려고 자녀 회원 행 잠금을 섞지 않는다.
-     * 측정 실험(ParentWalletContentionExperiment)도 이 메서드를 그대로 쓴다.
+     * 승인 5건 동시는 현재 UI(상세 화면 단건 승인)에서 생기지 않는 조건이라 판정 테스트에서는 뺐다(#223, #222).
      */
     static List<ConcurrentRunner.Task> parentWalletContentionTasks(QuestConcurrencyFixture fixture,
                                                                    QuestReviewService review,
