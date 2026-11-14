@@ -82,7 +82,10 @@ jobs:
           printf '%s\n' "$EC2_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/deploy_key" "$HOME/.ssh/known_hosts"
 
+      # EC2_SECURITY_GROUP_ID가 없으면(OCI 등 AWS 밖 서버) 두 AWS 단계를 건너뛴다.
+      # 그때 SSH 포트는 서버 방화벽에서 열어 두고 키 인증만 허용한다.
       - name: AWS 인증
+        if: vars.EC2_SECURITY_GROUP_ID != ''
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
@@ -90,6 +93,7 @@ jobs:
           role-skip-session-tagging: true
 
       - name: 러너 IP 임시 허용
+        if: vars.EC2_SECURITY_GROUP_ID != ''
         id: sg
         shell: bash
         run: |
