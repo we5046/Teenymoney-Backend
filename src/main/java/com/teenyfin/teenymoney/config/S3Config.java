@@ -1,10 +1,13 @@
 package com.teenyfin.teenymoney.config;
 
+import java.net.URI;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 /**
@@ -24,21 +27,35 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
  *
  * 두 클라이언트 모두 close()를 갖고 있고 Spring이 소멸 메서드로 자동 추론하므로
  * destroyMethod를 명시하지 않는다.
+ *
+ * aws.s3.endpoint가 비어 있으면 AWS S3를 그대로 쓴다. 값이 있으면 그 주소의 S3 호환 저장소
+ * (예: OCI Object Storage https://<namespace>.compat.objectstorage.<region>.oraclecloud.com)로
+ * 보내고 path-style 주소를 쓴다. OCI는 가상 호스트 방식 버킷 주소를 지원하지 않는다.
+ * OCI의 자격증명은 Customer Secret Key를 AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY로 넣는다.
  */
 @Configuration
 public class S3Config {
 
+    private static final S3Configuration PATH_STYLE =
+            S3Configuration.builder().pathStyleAccessEnabled(true).build();
+
     @Bean
-    public S3Client s3Client(@Value("${aws.region}") String region) {
-        return S3Client.builder()
-                .region(Region.of(region))
-                .build();
+    public S3Client s3Client(@Value("${aws.region}") String region,
+                             @Value("${aws.s3.endpoint:}") String endpoint) {
+        var builder = S3Client.builder().region(Region.of(region));
+        if (!endpoint.isBlank()) {
+            builder.endpointOverride(URI.create(endpoint)).serviceConfiguration(PATH_STYLE);
+        }
+        return builder.build();
     }
 
     @Bean
-    public S3Presigner s3Presigner(@Value("${aws.region}") String region) {
-        return S3Presigner.builder()
-                .region(Region.of(region))
-                .build();
+    public S3Presigner s3Presigner(@Value("${aws.region}") String region,
+                                   @Value("${aws.s3.endpoint:}") String endpoint) {
+        var builder = S3Presigner.builder().region(Region.of(region));
+        if (!endpoint.isBlank()) {
+            builder.endpointOverride(URI.create(endpoint)).serviceConfiguration(PATH_STYLE);
+        }
+        return builder.build();
     }
 }
