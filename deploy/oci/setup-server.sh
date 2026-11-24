@@ -11,8 +11,9 @@ apt-get install -y openjdk-17-jre-headless nginx certbot python3-certbot-nginx f
 command -v docker >/dev/null || curl -fsSL https://get.docker.com | sh
 
 # Oracle Ubuntu 이미지는 iptables에 REJECT가 기본으로 있다. ufw는 쓰지 않는다.
+# 허용 규칙은 REJECT보다 앞에 있어야 한다. 위치 번호를 고정하면 이미지마다 어긋난다.
 for p in 80 443; do
-  iptables -C INPUT -p tcp --dport "$p" -j ACCEPT 2>/dev/null || iptables -I INPUT 6 -p tcp --dport "$p" -j ACCEPT
+  iptables -C INPUT -p tcp --dport "$p" -j ACCEPT 2>/dev/null || iptables -I INPUT 1 -p tcp --dport "$p" -j ACCEPT
 done
 netfilter-persistent save
 
