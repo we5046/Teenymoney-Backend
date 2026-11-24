@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 25
     environment:
       name: development
-      url: https://www.teenymoney.kro.kr
+      url: https://www.teenymoney2.kro.kr
 
     env:
       EC2_HOST: ${{ vars.EC2_HOST }}
@@ -162,7 +162,7 @@ jobs:
           readonly backup_dir='/var/backups/teenymoney'
           readonly local_health='http://127.0.0.1:8080/api/v1/health'
           readonly local_db_health='http://127.0.0.1:8080/api/v1/health/db'
-          readonly public_health='https://www.teenymoney.kro.kr/api/v1/health'
+          readonly public_health='https://www.teenymoney2.kro.kr/api/v1/health'
 
           log() {
             printf '[%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"
@@ -364,5 +364,5 @@ jobs:
             echo "- Commit: \`$GITHUB_SHA\`"
             echo "- Environment: \`development\`"
             echo "- Result: \`${{ job.status }}\`"
-            echo "- URL: https://www.teenymoney.kro.kr"
+            echo "- URL: https://www.teenymoney2.kro.kr"
           } >> "$GITHUB_STEP_SUMMARY"
